@@ -1,4 +1,3 @@
-import {react} from 'react'
 import { useEffect, useRef } from 'react'
 import QRCode from 'qrcode'
 

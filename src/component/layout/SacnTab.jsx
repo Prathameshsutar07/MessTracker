@@ -7,7 +7,7 @@ import {
 import Calendar from './Calendar'
 import StatusPill from './StatusPill'
 
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+// const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
 export default function ScanTab({ onToast }) {
   const [scanning,  setScanning]  = useState(false)
@@ -100,7 +100,7 @@ export default function ScanTab({ onToast }) {
   const lunchMarked  = isMealMarked(entries, 'lunch')
   const dinnerMarked = isMealMarked(entries, 'dinner')
   const active       = customer ? isActive(customer, entries.length) : false
-  const now          = new Date()
+  // const now          = new Date()
   const daysLeft     = customer ? Math.max(0, Math.ceil((new Date(customer.endDate) - new Date(today())) / 86400000)) : 0
 
   return (
