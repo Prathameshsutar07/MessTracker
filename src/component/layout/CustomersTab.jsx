@@ -66,9 +66,9 @@ export default function CustomersTab({ onToast }) {
               c.id.includes(search)
             )
           }).map((c) => {
-            const cEntries = [] // list view uses lightweight data — entries loaded on open
-            const active   = isActive(c, 0)
-            const used     = 0  // shown after open
+            // const cEntries = [] // list view uses lightweight data — entries loaded on open
+            // const active   = isActive(c, 0)
+            // const used     = 0  // shown after open
             return (
               <div key={c.id} onClick={() => handleSelectCustomer(c)}
                 className="bg-[#18181c] border border-[#2e2e38] p-4 rounded-xl cursor-pointer hover:border-[#4a4a5a] transition-colors">
