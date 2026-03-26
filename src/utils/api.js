@@ -1,106 +1,115 @@
-// ─────────────────────────────────────────────────────────────
-//  MessTrack — Google Sheets API layer via Apps Script
-// ─────────────────────────────────────────────────────────────
+import { db } from './firebase'
+import {
+  collection, doc, getDoc, getDocs,
+  addDoc, query, where,
+  serverTimestamp,
+} from 'firebase/firestore'
 
-const APPS_SCRIPT_URL = process.env.REACT_APP_APPS_SCRIPT_URL || ''
+// ── Collections ───────────────────────────────────────────────
+const CUSTOMERS = 'customers'
+const ENTRIES   = 'entries'
 
-// ── Date helpers — use LOCAL date, never UTC ──────────────────
-// new Date().toISOString() is UTC — in India (UTC+5:30) before
-// 5:30 AM it returns yesterday's date, causing "plan expired" errors.
 
+// ── Date helpers ──────────────────────────────────────────────
 export const today = () => {
   const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0'),
+  ].join('-')
 }
 
-export const fmtDate = (d) =>
-  // Add T12:00:00 so parsing never crosses a day boundary due to timezone
-  new Date(d + 'T12:00:00').toLocaleDateString('en-IN', {
+export const fmtDate = (d) => {
+  if (!d) return '—'
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
   })
+}
 
 export const addDays = (dateStr, n) => {
-  // Use noon to prevent DST / UTC midnight edge cases shifting the date
   const d = new Date(dateStr + 'T12:00:00')
   d.setDate(d.getDate() + n)
-  const y   = d.getFullYear()
-  const m   = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0'),
+  ].join('-')
 }
 
 // ── Plan helpers ──────────────────────────────────────────────
 export const isActive = (customer, usedMeals) => {
   const n = today()
-  const withinDate = n >= customer.startDate && n <= customer.endDate
-  const mealsLeft  = Number(usedMeals) < Number(customer.totalMeals)
-  return withinDate && mealsLeft
+  return (
+    n >= customer.startDate &&
+    n <= customer.endDate &&
+    Number(usedMeals) < Number(customer.totalMeals)
+  )
 }
 
 export const getMealStats = (customer, entries) => {
   const used      = entries.length
-  const remaining = Math.max(0, Number(customer.totalMeals) - used)
-  const percent   = Math.round((used / Number(customer.totalMeals)) * 100)
+  const total     = Number(customer.totalMeals) || 30
+  const remaining = Math.max(0, total - used)
+  const percent   = Math.round((used / total) * 100)
   return { used, remaining, percent }
 }
 
 export const isMealMarked = (entries, meal) =>
   entries.some((e) => e.date === today() && e.meal === meal)
 
-// ── Core fetch wrapper ────────────────────────────────────────
-async function call(action, params = {}) {
-  if (!APPS_SCRIPT_URL) throw new Error('REACT_APP_APPS_SCRIPT_URL not set in .env')
-
-  const url = new URL(APPS_SCRIPT_URL)
-  url.searchParams.set('action', action)
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
-
-  const res = await fetch(url.toString(), { redirect: 'follow' })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const json = await res.json()
-  if (json.error) throw new Error(json.error)
-  return json
-}
+// ── ID generator ──────────────────────────────────────────────
+const genId = () => 'c-' + Math.random().toString(36).slice(2, 8).toUpperCase()
 
 // ── Customers ─────────────────────────────────────────────────
 export const getCustomers = async () => {
-  const { customers } = await call('getCustomers')
-  return customers
+  const snap = await getDocs(collection(db, CUSTOMERS))
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
 }
 
 export const addCustomer = async ({ name, mobile, startDate, totalMeals }) => {
   const endDate = addDays(startDate, 44)
-  const { customer } = await call('addCustomer', {
-    name, mobile, startDate, endDate,
-    totalMeals: String(totalMeals),
-    createdAt: today(),
-  })
-  return customer
+  const customer = {
+    name,
+    mobile,
+    startDate,
+    endDate,
+    totalMeals: Number(totalMeals),
+    createdAt:  today(),
+    createdTs:  serverTimestamp(),
+  }
+  // Use custom ID so QR code matches Firestore document ID
+  const customId  = genId()
+  const { setDoc } = await import('firebase/firestore')
+  await setDoc(doc(db, CUSTOMERS, customId), customer)
+  return { id: customId, ...customer }
 }
 
 export const getCustomerById = async (id) => {
-  const { customer } = await call('getCustomerById', { id })
-  return customer
+  const snap = await getDoc(doc(db, CUSTOMERS, id))
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() }
 }
 
 // ── Entries ───────────────────────────────────────────────────
 export const getEntriesForCustomer = async (customerId) => {
-  const { entries } = await call('getEntriesForCustomer', { customerId })
-  return entries
+  const q    = query(collection(db, ENTRIES), where('customerId', '==', customerId))
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
 }
 
 // Returns 'ok' | 'duplicate' | 'exhausted' | 'expired'
 export const markEntry = async (customer, entries, meal) => {
   const t = today()
-
-  // Compare as strings — both are YYYY-MM-DD local dates
-  if (t < customer.startDate || t > customer.endDate) return 'expired'
-  if (entries.length >= Number(customer.totalMeals))  return 'exhausted'
+  if (t < customer.startDate || t > customer.endDate)       return 'expired'
+  if (entries.length >= Number(customer.totalMeals))        return 'exhausted'
   if (entries.find((e) => e.date === t && e.meal === meal)) return 'duplicate'
 
-  await call('markEntry', { customerId: customer.id, date: t, meal })
+  await addDoc(collection(db, ENTRIES), {
+    customerId: customer.id,
+    date:       t,
+    meal,
+    createdTs:  serverTimestamp(),
+  })
   return 'ok'
 }

@@ -40,7 +40,9 @@ export default function CustomersTab({ onToast }) {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Customers</h1>
+      <div className="flex items-center justify-between px-5 pt-6 pb-2">
+        <span className="font-mono text-[10px] bg-[#222228] border border-[#2e2e38] text-[#8a8a9a] px-2.5 py-1 rounded-full">Customers</span>
+      </div>
       {/* search and list code... */}
       <input className="w-full bg-[#222228] border border-[#2e2e38] text-[#f0ede8] rounded-lg
         px-3.5 py-3 text-[15px] placeholder-[#8a8a9a] mb-4
