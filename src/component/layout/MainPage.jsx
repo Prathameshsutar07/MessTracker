@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import { FaPlusCircle } from "react-icons/fa";
-import { MdOutlineQrCodeScanner } from "react-icons/md";
+import { MdOutlineQrCodeScanner, MdOutlineDashboard } from "react-icons/md";
 import { FaList } from "react-icons/fa6";
 import AddCustomer from './AddCustomer';
 import CustomersTab from './CustomersTab';
 import ScanTab from './SacnTab';
+import DashboardTab from './DashboardTab';
 import Toast from './Toast';
 import { signOut } from "firebase/auth";
 import { auth } from "../../utils/firebase";
@@ -87,12 +88,24 @@ function MainPage() {
             <span>CUSTOMERS</span>
           </li>
 
+          <li
+            onClick={() => setActive("dashboard")}
+            className={`flex flex-col items-center gap-1 cursor-pointer transition
+        ${active === "dashboard"
+                ? "text-yellow-400"
+                : "text-gray-400 hover:text-white"}`}
+          >
+            <MdOutlineDashboard className="text-lg md:text-xl" />
+            <span>DASHBOARD</span>
+          </li>
+
         </ul>
       </nav>
       <div className='p-4'>
         {active === "add" && <AddCustomer onToast={handleToast} />}
         {active === "scan" && <ScanTab onToast={handleToast} />}
         {active === "customers" && <CustomersTab onToast={handleToast} />}
+        {active === "dashboard" && <DashboardTab onToast={handleToast} />}
       </div>
 
       {toast && <Toast key={toast.key} msg={toast.msg} type={toast.type} onDone={() => setToast(null)} />}

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import jsQR from 'jsqr'
 import {
   getCustomerById, getEntriesForCustomer,
-  markEntry, isMealMarked, isActive, getMealStats, today, fmtDate,
+  markEntry, isMealMarked, isActive, getMealStats, today, fmtDate, getPaymentLogs
 } from '../../utils/api'
 import Calendar from './Calendar'
 import StatusPill from './StatusPill'
@@ -77,7 +77,8 @@ export default function ScanTab({ onToast }) {
     if (!customer || marking) return
     setMarking(meal)
     try {
-      const result = await markEntry(customer, entries, meal)
+      const paymentLogs = await getPaymentLogs(customer.id)
+      const result = await markEntry(customer,paymentLogs, entries, meal)
       if (result === 'ok') {
         const updated = await getEntriesForCustomer(customer.id)
         setEntries(updated)
@@ -88,6 +89,8 @@ export default function ScanTab({ onToast }) {
         onToast('All meals used up in this plan', 'err')
       } else if (result === 'expired') {
         onToast('Plan has expired', 'err')
+      }else if (result === 'unpaid') {
+        onToast('No active payment found. Please pay to mark meals.', 'err')
       }
     } catch (err) {
       onToast('Error: ' + err.message, 'err')

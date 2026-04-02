@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { auth } from "../../utils/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
-function Login({ onLogin }) {
+function Login({ onLogin, adminMode }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,7 +25,7 @@ function Login({ onLogin }) {
       <div className="text-black p-8 rounded-2xl shadow-lg w-full max-w-md">
         
         <h2 className="text-2xl font-bold text-center mb-6">
-          Welcome Back 👋
+          {adminMode ? "Admin Login ⚡" : "Welcome Back 👋"}
         </h2>
 
         <form onSubmit={handleLogin} className="space-y-4">
