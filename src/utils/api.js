@@ -48,13 +48,21 @@ export const setHotelContext = (id, config) => {
 
 export const getHotelConfig = async (uid) => {
   const snap = await getDoc(doc(db, 'hotels', uid));
-  if (snap.exists()) return snap.data();
+  if (snap.exists()) {
+    const data = snap.data();
+    delete data.password; // Never expose password
+    return data;
+  }
   return null;
 }
 
 export const getHotels = async () => {
   const snap = await getDocs(collection(db, 'hotels'));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs.map(d => {
+    const data = d.data();
+    delete data.password; // Never expose password
+    return { id: d.id, ...data };
+  });
 }
 
 export const addHotel = async ({ email, password, hotelName, expiryDays, plans }) => {
@@ -62,8 +70,7 @@ export const addHotel = async ({ email, password, hotelName, expiryDays, plans }
   const secondaryAuth = getAuth(secondaryApp);
   const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
   const uid = cred.user.uid;
-  await signOut(secondaryAuth);
-  
+  aw
   const hotelDoc = {
     email,
     password, // store for updates

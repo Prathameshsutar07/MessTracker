@@ -384,7 +384,7 @@ function Header({ badge }) {
   return (
     <div className="flex items-center justify-between px-5 pt-6 pb-2">
       <div className="text-[22px] font-semibold tracking-tight">
-        <span className="text-[#f0c040]">Mess</span>Track
+        <span className="font-mono text-[10px] bg-[#222228] border border-[#2e2e38] text-[#8a8a9a] px-2.5 py-1 rounded-full">Add Customer</span>
       </div>
       <span className="font-mono text-[10px] bg-[#222228] border border-[#2e2e38] text-[#8a8a9a] px-2.5 py-1 rounded-full">
         {badge}

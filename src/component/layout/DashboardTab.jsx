@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getDashboardData, today } from '../../utils/api';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
 
 export default function DashboardTab({ onToast }) {
   const [startDate, setStartDate] = useState(() => {
@@ -63,47 +62,15 @@ export default function DashboardTab({ onToast }) {
     doc.text(`Lunches Served: ${lunchCount}`, 14, 60);
     doc.text(`Dinners Served: ${dinnerCount}`, 14, 66);
 
-    let startY = 76;
-
-    if (data.payments.length > 0) {
-      doc.setFontSize(14);
-      doc.text("Payments Collected", 14, startY);
-      doc.autoTable({
-        startY: startY + 4,
-        head: [['Date', 'Customer', 'Method', 'Amount']],
-        body: data.payments.map(p => [p.date, p.customerName || '—', p.method, `Rs. ${p.amount}`]),
-      });
-      startY = doc.lastAutoTable.finalY + 14;
-    }
-
-    if (data.entries.length > 0) {
-      doc.setFontSize(14);
-      doc.text("Meals Served", 14, startY);
-      doc.autoTable({
-        startY: startY + 4,
-        head: [['Date', 'Meal', 'Customer']],
-        body: data.entries.map(e => [e.date, e.meal, e.customerName || '—']),
-      });
-      startY = doc.lastAutoTable.finalY + 14;
-    }
-
-    if (data.customers.length > 0) {
-       doc.setFontSize(14);
-       doc.text("New Customers Registered", 14, startY);
-       doc.autoTable({
-         startY: startY + 4,
-         head: [['Date', 'Name', 'Mobile', 'Plan Amount']],
-         body: data.customers.map(c => [c.createdAt, c.name, c.mobile, `Rs. ${c.paymentAmount}`]),
-       });
-    }
-
     doc.save(`Mess_Report_${startDate}_to_${endDate}.pdf`);
   };
 
   return (
     <div className="pb-20">
       <div className="flex items-center justify-between px-4 pt-6 pb-4">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="font-mono text-[10px] bg-[#222228] border border-[#2e2e38] text-[#8a8a9a] px-2.5 py-1 rounded-full">
+          Dashboard
+        </h1>
       </div>
 
       <div className="px-4 mb-4 flex flex-col gap-3">

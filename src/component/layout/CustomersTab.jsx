@@ -157,7 +157,9 @@ export default function CustomersTab({ onToast }) {
     <div className="pb-4">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-6 pb-4">
-        <h1 className="text-2xl font-bold">Customers</h1>
+        <h1 className="font-mono text-[10px] bg-[#222228] border border-[#2e2e38] text-[#8a8a9a] px-2.5 py-1 rounded-full">
+          Customers
+        </h1>
         <span className="font-mono text-[10px] bg-[#222228] border border-[#2e2e38] text-[#8a8a9a] px-2.5 py-1 rounded-full">
           {customers.length} total
         </span>
